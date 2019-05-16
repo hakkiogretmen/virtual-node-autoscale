@@ -1,4 +1,4 @@
-# Virtual node Autoscale Demo
+# Autoscale without Virtual node Demo
 
 This repository demonstrates how to use custom metrics in combination with the Kubernetes Horizontal Pod Autoscaler to autoscale an application. Virtual nodes let you scale quickly and easily run Kubernetes pods on Azure Container Instances where you'll pay only for the container instance runtime. 
 
@@ -7,9 +7,7 @@ This repository will guide you through first installing the virtual node admissi
 This demo was used at Microsoft Ignite 2018 Kenote. Check out the [video](https://mediastream.microsoft.com/events/2018/1809/Ignite/player/tracks/track2.html?start=17300).
 
 ## Prerequisites
-* [Virtual node enabled AKS cluster](https://docs.microsoft.com/azure/aks/virtual-kubelet) running Kubernetes version 1.10 or later
-* Setup AKS with Advanced Networking
-* [MutatingAdmissionWebhook admission controller](https://kubernetes.io/docs/admin/extensible-admission-controllers/#external-admission-webhooks) activated
+* [Virtual node disabled AKS cluster] running Kubernetes version 1.10 or later
 * Running Ingress controller (nginx or similar)
 
 ## Initialize Helm
@@ -20,51 +18,6 @@ Helm will be used to install the both the demo application and the supporting co
 kubectl -n kube-system create sa tiller
 kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
 helm init --service-account tiller
-```
-
-## Install Virtual Node admission-controller (OPTIONAL)
-
-In order to control the Kubernetes scheduler to "favor" VM backed Kubernetes nodes BEFORE scaling out to the virtual node we can use a Kubernetes Webhook Admission Controller to add pod affinity and toleration key/values to all pods in a correctly labeled namespace.
-
-### Pod patches
-
-All pods on a correctly labelled namespace will be patched as follows:
-
-#### Anti-affinity
-
-```yaml
-spec:
-  affinity:
-    nodeAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-      - preference:
-          matchExpressions:
-          - key: type
-            operator: NotIn
-            values:
-            - virtual-kubelet
-```
-
-#### Toleration
-
-```yaml
-spec:
-  tolerations:
-  - key: virtual-kubelet.io/provider
-    operator: Exists
-  - effect: NoSchedule
-    key: azure.com/aci
-```
-
-### Install
-
-```
-helm install --name vn-affinity ./charts/vn-affinity-admission-controller
-```
-
-Label the namespace you wish enable the webhook to function on
-```
-kubectl label namespace default vn-affinity-injection=enabled
 ```
 
 ## Install Prometheus Operator
@@ -93,9 +46,9 @@ kubectl expose pod prometheus-prometheus-0 --port 9090 --target-port 9090
 
 ## Deploy online-store app
 
-You will need your Virtual Kubelet node name, external IP address for Ingress, Ingress class name, and decide if you wish to use App Insights to install the online-store app. 
+You will need a node name, external IP address for Ingress, Ingress class name, and decide if you wish to use App Insights to install the online-store app. 
 
-### Export Virtual Kubelet node name
+### Export node name
 The app will also install a counter that will get the pod count for the application and provide a metric for pods on Virtual Kubelet and pods on all other nodes.
 
 ```bash
@@ -104,10 +57,8 @@ NAME                       STATUS    ROLES     AGE       VERSION
 aks-nodepool1-30440750-0   Ready     agent     27d       v1.10.6
 aks-nodepool1-30440750-1   Ready     agent     27d       v1.10.6
 aks-nodepool1-30440750-2   Ready     agent     27d       v1.10.6
-virtual-kubelet            Ready     agent     16h       v1.8.3
 ```
 
-In this case, it's Virtual Kubelet. If you've installed with the ACI Connector, you may have a node name like **virtual-kubelet-aci-connector-linux-westcentralus**.
 
 Export the node name to an environment variable
 
@@ -120,7 +71,7 @@ Stated in the pre-requisites, an ingress solution must exist to accept requests 
 
 This can be installed with the following add-on command.
 ```bash
-az aks enable-addons --resource-group myResourceGroup --name myAKSCluster --addons http_application_routing
+az aks enable-addons --resource-group w1-rg --name w1-onpremise --addons http_application_routing
 ```
 
 Once installed, export the external IP address of your ingress point by retrieving details of your kube-system.
@@ -253,6 +204,12 @@ export GOPATH=~/go
 export PATH=$GOPATH/bin:$PATH
 go get -u github.com/rakyll/hey
 hey -z 20m http://<whatever-the-ingress-url-is>
+```
+
+Or use Azure Container Instance for load testing
+
+```
+az container create -g w1-rg -n w1-loadtester --image azch/loadtest --restart-policy Never -e SERVICE_IP=<public ip of order capture service>
 ```
 
 ## Watch it scale
