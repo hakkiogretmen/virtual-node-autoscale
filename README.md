@@ -97,16 +97,10 @@ Export this external IP to an environment variable.
 export INGRESS_EXTERNAL_IP=<ingress_external_ip>
 ```
 
-Next find the Ingress controller class name.
+Next find the Ingress controller class name and Export the Ingress controller class annotation.
 
 ```bash
-kubectl -n kube-system get po <ingress_controller_pod_name> -o yaml | grep ingress-class | sed -e 's/.*=//'
-```
-
-Export the Ingress controller class annotation.
-
-```bash
-export INGRESS_CLASS_ANNOTATION=<ingress_controller_class_annotation>
+INGRESS_CLASS_ANNOTATION=$(kubectl -n kube-system get po <ingress_controller_pod_name> -o yaml | grep ingress-class | sed -e 's/.*=//')
 ```
 
 ### Set Application Insights on or off
