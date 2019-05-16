@@ -100,7 +100,7 @@ export INGRESS_EXTERNAL_IP=<ingress_external_ip>
 Next find the Ingress controller class name.
 
 ```bash
-kubectl -n <ingress_controller_namespace> get po <ingress_controller_pod_name> -o yaml | grep ingress-class | sed -e 's/.*=//'
+kubectl -n kube-system get po <ingress_controller_pod_name> -o yaml | grep ingress-class | sed -e 's/.*=//'
 ```
 
 Export the Ingress controller class annotation.
