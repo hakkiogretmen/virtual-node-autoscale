@@ -203,7 +203,7 @@ hey -z 20m http://<whatever-the-ingress-url-is>
 Or use Azure Container Instance for load testing
 
 ```
-az container create -g w1-rg -n w1-loadtester --image azch/loadtest --restart-policy Never -e SERVICE_IP=<public ip of order capture service>
+az container create -g w1-rg -n w1-loadtester --image hakkiogretmen/load-test --restart-policy Never -e APPLICATION_URL=<public url of your application>
 ```
 
 ## Watch it scale
