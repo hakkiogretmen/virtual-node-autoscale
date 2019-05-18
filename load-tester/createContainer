@@ -1,8 +1,0 @@
-DOCKER_IMAGE=hakkiogretmen/load-tester
-DOCKER_TAG=latest
-
-# Build Docker Image
-docker build -t $(DOCKER_IMAGE):$(DOCKER_TAG) .
-
-# Push to DockerHub
-docker push $(DOCKER_IMAGE):$(DOCKER_TAG)
